@@ -128,6 +128,11 @@
   .day-dots{ position:absolute; bottom:5px; display:flex; gap:2px; }
   .day-dots .dot{ width:4.5px; height:4.5px; border-radius:50%; }
 
+  .day-cell.holiday .num{ color:#e74c3c !important; font-weight:800; }
+  .day-dots .dot.holiday-dot{ width:5px; height:5px; }
+
+  .holiday-banner{ display:flex; align-items:center; gap:8px; background:#fdeaea; color:#c0392b; font-size:13px; font-weight:800; padding:10px 12px; border-radius:12px; margin-bottom:10px; }
+
   /* ---------- 오늘/선택일 일정 리스트 ---------- */
   .agenda-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
   .agenda-head h2{ font-size:15px; margin:0; font-weight:800; }
@@ -161,7 +166,7 @@
   .row2{ display:flex; gap:10px; }
   .row2 > div{ flex:1; }
   .repeat-days{ display:flex; gap:5px; margin-top:6px; }
-  .repeat-days label{ flex:1; text-align:center; margin:0; }
+  #modalBox .repeat-days label{ flex:1; text-align:center; margin:0; display:block; }
   .repeat-days input{ display:none; }
   .repeat-days span{ display:block; padding:9px 0; border:1.5px solid var(--line); border-radius:9px; font-size:12.5px; color:var(--muted); font-weight:700; }
   .repeat-days input:checked + span{ background:var(--text); color:#fff; border-color:var(--text); }
@@ -170,10 +175,11 @@
   #saveBtn{ background:var(--accent); color:var(--accent-ink); }
   #cancelBtn{ background:var(--bg); color:var(--text); }
   #deleteBtn{ background:#fdeaea; color:#e74c3c; display:none; }
-  #repeatSection{ display:none; }
-  .repeat-toggle{ display:flex; align-items:center; gap:8px; margin-top:16px; }
-  .repeat-toggle input{ width:auto; }
-  .repeat-toggle span{ font-size:13.5px; font-weight:700; }
+  #repeatOptions{ display:none; }
+  .skip-row{ display:flex; gap:10px; margin-top:14px; }
+  #modalBox label.skip-toggle{ flex:1; display:flex; align-items:center; gap:6px; background:var(--bg); border-radius:10px; padding:10px 10px; margin:0; cursor:pointer; }
+  #modalBox label.skip-toggle input{ width:auto; flex-shrink:0; accent-color:var(--accent); }
+  .skip-toggle span{ font-size:12.5px; font-weight:700; color:var(--text); word-break:keep-all; }
 </style>
 </head>
 <body>
@@ -232,6 +238,7 @@
       <h2 id="agendaTitle">📌 오늘 일정</h2>
       <span class="agenda-count" id="agendaCount">0개</span>
     </div>
+    <div id="holidayBanner"></div>
     <div class="agenda-list" id="agendaList"></div>
   </div>
 
@@ -263,20 +270,34 @@
         <div><label>시작 시간</label><input type="time" id="inputTime" value="16:00"></div>
         <div><label>종료 시간</label><input type="time" id="inputEndTime" value="17:00"></div>
       </div>
-      <div class="repeat-toggle">
-        <input type="checkbox" id="inputRepeat">
-        <span>🔁 매주 반복 (루틴 일정)</span>
-      </div>
-      <div id="repeatSection">
-        <label>반복 요일</label>
-        <div class="repeat-days">
-          <label><input type="checkbox" value="1"><span>월</span></label>
-          <label><input type="checkbox" value="2"><span>화</span></label>
-          <label><input type="checkbox" value="3"><span>수</span></label>
-          <label><input type="checkbox" value="4"><span>목</span></label>
-          <label><input type="checkbox" value="5"><span>금</span></label>
-          <label><input type="checkbox" value="6"><span>토</span></label>
-          <label><input type="checkbox" value="0"><span>일</span></label>
+      <label>반복</label>
+      <select id="inputRepeatType">
+        <option value="none">반복 안 함</option>
+        <option value="daily">매일</option>
+        <option value="weekly">매주</option>
+        <option value="monthly">매월 (같은 날짜)</option>
+        <option value="yearly">매년 (같은 날짜)</option>
+      </select>
+      <div id="repeatOptions">
+        <div class="row2">
+          <div><label>반복 시작일</label><input type="date" id="inputRepeatStart"></div>
+          <div><label>반복 종료일</label><input type="date" id="inputRepeatEnd" placeholder="무기한"></div>
+        </div>
+        <div id="repeatWeekdaySection">
+          <label>반복 요일</label>
+          <div class="repeat-days">
+            <label><input type="checkbox" value="1"><span>월</span></label>
+            <label><input type="checkbox" value="2"><span>화</span></label>
+            <label><input type="checkbox" value="3"><span>수</span></label>
+            <label><input type="checkbox" value="4"><span>목</span></label>
+            <label><input type="checkbox" value="5"><span>금</span></label>
+            <label><input type="checkbox" value="6"><span>토</span></label>
+            <label><input type="checkbox" value="0"><span>일</span></label>
+          </div>
+        </div>
+        <div class="skip-row">
+          <label class="skip-toggle" id="skipWeekendRow"><input type="checkbox" id="inputSkipWeekend"><span>주말 제외</span></label>
+          <label class="skip-toggle"><input type="checkbox" id="inputSkipHoliday"><span>공휴일 제외</span></label>
         </div>
       </div>
       <div class="modal-buttons">
@@ -316,6 +337,29 @@
       '예나': { icon:'🧒', color:'#a78bfa' },
       '기타': { icon:'📎', color:'#94a3b8' }
     };
+
+    // 대한민국 법정공휴일 (2025~2027, 대체공휴일 포함). 설/추석/부처님오신날은 음력 기준이라
+    // 매년 값이 바뀝니다 — 새해가 되면 관공서 공휴일 안내를 참고해 이 목록을 추가해주세요.
+    const KR_HOLIDAYS = {
+      '2025-01-01':'신정','2025-01-27':'임시공휴일','2025-01-28':'설날 연휴','2025-01-29':'설날','2025-01-30':'설날 연휴',
+      '2025-03-01':'삼일절','2025-03-03':'삼일절 대체공휴일','2025-05-05':'어린이날·부처님오신날','2025-05-06':'대체공휴일',
+      '2025-06-06':'현충일','2025-08-15':'광복절','2025-10-03':'개천절','2025-10-05':'추석 연휴','2025-10-06':'추석',
+      '2025-10-07':'추석 연휴','2025-10-08':'추석 대체공휴일','2025-10-09':'한글날','2025-12-25':'기독탄신일',
+
+      '2026-01-01':'신정','2026-02-16':'설날 연휴','2026-02-17':'설날','2026-02-18':'설날 연휴','2026-03-01':'삼일절',
+      '2026-03-02':'삼일절 대체공휴일','2026-05-01':'노동절','2026-05-05':'어린이날','2026-05-24':'부처님오신날',
+      '2026-05-25':'부처님오신날 대체공휴일','2026-06-06':'현충일','2026-07-17':'제헌절','2026-08-15':'광복절',
+      '2026-08-17':'광복절 대체공휴일','2026-09-24':'추석 연휴','2026-09-25':'추석','2026-09-26':'추석 연휴',
+      '2026-10-03':'개천절','2026-10-05':'개천절 대체공휴일','2026-10-09':'한글날','2026-12-25':'기독탄신일',
+
+      '2027-01-01':'신정','2027-02-06':'설날 연휴','2027-02-07':'설날','2027-02-08':'설날 연휴','2027-02-09':'설날 대체공휴일',
+      '2027-03-01':'삼일절','2027-05-01':'노동절','2027-05-03':'노동절 대체공휴일','2027-05-05':'어린이날',
+      '2027-05-13':'부처님오신날','2027-06-06':'현충일','2027-07-17':'제헌절','2027-07-19':'제헌절 대체공휴일',
+      '2027-08-15':'광복절','2027-08-16':'광복절 대체공휴일','2027-09-14':'추석 연휴','2027-09-15':'추석',
+      '2027-09-16':'추석 연휴','2027-10-03':'개천절','2027-10-04':'개천절 대체공휴일','2027-10-09':'한글날',
+      '2027-10-11':'한글날 대체공휴일','2027-12-25':'기독탄신일','2027-12-27':'기독탄신일 대체공휴일'
+    };
+
     let events = [];
     let editingId = null;
     let activeFilter = 'all';
@@ -492,12 +536,38 @@
     }
 
     /* ---------------- 일정 조회 헬퍼 ---------------- */
+    // 기존 데이터(반복 요일만 있던 예전 방식)도 그대로 인식되도록 repeatType이 없으면
+    // repeatDays 유무로 'weekly'/'none'을 추론합니다. 기존에 저장된 일정은 수정 없이 계속 표시됩니다.
+    function eventOccursOnDate(e, dateStr){
+      const type = e.repeatType || ((e.repeatDays && e.repeatDays.length) ? 'weekly' : 'none');
+      if(type==='none') return e.date===dateStr;
+
+      if(e.repeatStart && dateStr < e.repeatStart) return false;
+      if(e.repeatEnd && dateStr > e.repeatEnd) return false;
+
+      const d=new Date(dateStr+'T00:00:00');
+      const dow=d.getDay();
+      let matches=false;
+      if(type==='weekly'){
+        matches=(e.repeatDays||[]).includes(dow);
+      } else if(type==='daily'){
+        matches=true;
+      } else if(type==='monthly'){
+        const baseDay=parseInt((e.repeatStart||e.date||dateStr).split('-')[2],10);
+        matches=d.getDate()===baseDay;
+      } else if(type==='yearly'){
+        const parts=(e.repeatStart||e.date||dateStr).split('-');
+        matches=(d.getMonth()+1)===parseInt(parts[1],10) && d.getDate()===parseInt(parts[2],10);
+      }
+      if(!matches) return false;
+      if(e.skipWeekends && (dow===0 || dow===6)) return false;
+      if(e.skipHolidays && KR_HOLIDAYS[dateStr]) return false;
+      return true;
+    }
     function eventsOnDate(dateStr){
-      const dow=new Date(dateStr+'T00:00:00').getDay();
       return events.filter(e=>{
         if(activeFilter!=='all' && e.person!==activeFilter) return false;
-        if(e.repeatDays && e.repeatDays.length) return e.repeatDays.includes(dow);
-        return e.date===dateStr;
+        return eventOccursOnDate(e, dateStr);
       });
     }
 
@@ -523,7 +593,9 @@
         const dow=cellDate.getDay();
 
         const cell=document.createElement('div');
-        cell.className='day-cell'+(otherMonth?' other-month':'')+(dow===0?' sun':'')+(dow===6?' sat':'')+(dateStr===todayS?' is-today':'')+(dateStr===selectedDate?' is-selected':'');
+        const isHoliday=!!KR_HOLIDAYS[dateStr];
+        cell.className='day-cell'+(otherMonth?' other-month':'')+(dow===0?' sun':'')+(dow===6?' sat':'')+(isHoliday?' holiday':'')+(dateStr===todayS?' is-today':'')+(dateStr===selectedDate?' is-selected':'');
+        cell.title=isHoliday?KR_HOLIDAYS[dateStr]:'';
         cell.innerHTML=`<div class="num">${label}</div>`;
 
         const dayEvents=eventsOnDate(dateStr);
@@ -542,6 +614,12 @@
       }
     }
 
+    function repeatLabel(e){
+      const type=e.repeatType || ((e.repeatDays&&e.repeatDays.length)?'weekly':'none');
+      const map={ daily:'매일', weekly:'매주', monthly:'매월', yearly:'매년' };
+      return map[type] ? `· 🔁${map[type]}` : '';
+    }
+
     /* ---------------- 선택일 일정 리스트 ---------------- */
     function renderAgenda(){
       const list=document.getElementById('agendaList');
@@ -550,6 +628,10 @@
 
       const isToday=selectedDate===todayStr();
       document.getElementById('agendaTitle').textContent=(isToday?'📌 오늘 일정 · ':'📌 ')+fmtDateKo(selectedDate);
+
+      const holidayName=KR_HOLIDAYS[selectedDate];
+      document.getElementById('holidayBanner').innerHTML = holidayName
+        ? `<div class="holiday-banner">🎌 ${holidayName}</div>` : '';
 
       list.innerHTML='';
       if(!dataLoaded){
@@ -567,7 +649,7 @@
         row.innerHTML=`
           <div class="p-avatar" style="background:${p.color}">${p.icon}</div>
           <div class="info">
-            <div class="top-line"><span class="name">${e.person}</span><span class="cat">${e.category||''}</span>${(e.repeatDays&&e.repeatDays.length)?'<span class="repeat-tag">· 🔁매주</span>':''}</div>
+            <div class="top-line"><span class="name">${e.person}</span><span class="cat">${e.category||''}</span><span class="repeat-tag">${repeatLabel(e)}</span></div>
             <div class="title">${e.title}</div>
           </div>
           <div class="time">${e.time}${e.endTime?'<br>~'+e.endTime:''}</div>
@@ -578,11 +660,20 @@
     }
 
     /* ---------------- 모달 ---------------- */
+    function applyRepeatTypeUI(type){
+      document.getElementById('repeatOptions').style.display = type==='none' ? 'none' : 'block';
+      document.getElementById('repeatWeekdaySection').style.display = type==='weekly' ? 'block' : 'none';
+      document.getElementById('skipWeekendRow').style.display = type==='weekly' ? 'none' : 'flex';
+    }
     function openModal(){
       editingId=null;
       document.getElementById('modalTitle').textContent='일정 추가';
       document.getElementById('deleteBtn').style.display='none';
       document.getElementById('inputDate').value=selectedDate;
+      document.getElementById('inputRepeatType').value='none';
+      document.getElementById('inputRepeatStart').value=selectedDate;
+      document.getElementById('inputRepeatEnd').value='';
+      applyRepeatTypeUI('none');
       document.getElementById('modal').style.display='flex';
     }
     function openEditModal(e){
@@ -595,22 +686,33 @@
       document.getElementById('inputTime').value=e.time;
       document.getElementById('inputEndTime').value=e.endTime||'';
       document.getElementById('inputDate').value=e.date||selectedDate;
-      document.getElementById('inputRepeat').checked=!!(e.repeatDays&&e.repeatDays.length);
-      document.getElementById('repeatSection').style.display=document.getElementById('inputRepeat').checked?'block':'none';
+
+      const type=e.repeatType || ((e.repeatDays&&e.repeatDays.length)?'weekly':'none');
+      document.getElementById('inputRepeatType').value=type;
+      document.getElementById('inputRepeatStart').value=e.repeatStart || e.date || selectedDate;
+      document.getElementById('inputRepeatEnd').value=e.repeatEnd || '';
+      document.getElementById('inputSkipWeekend').checked=!!e.skipWeekends;
+      document.getElementById('inputSkipHoliday').checked=!!e.skipHolidays;
       document.querySelectorAll('.repeat-days input').forEach(el=>{ el.checked=(e.repeatDays||[]).includes(parseInt(el.value)); });
+      applyRepeatTypeUI(type);
+
       document.getElementById('modal').style.display='flex';
     }
     function closeModal(){ document.getElementById('modal').style.display='none'; resetForm(); }
     function resetForm(){
       document.getElementById('inputTitle').value='';
-      document.getElementById('inputRepeat').checked=false;
-      document.getElementById('repeatSection').style.display='none';
+      document.getElementById('inputRepeatType').value='none';
+      document.getElementById('inputRepeatStart').value='';
+      document.getElementById('inputRepeatEnd').value='';
+      document.getElementById('inputSkipWeekend').checked=false;
+      document.getElementById('inputSkipHoliday').checked=false;
+      applyRepeatTypeUI('none');
       document.querySelectorAll('.repeat-days input').forEach(el=>el.checked=false);
     }
     document.getElementById('addBtn').onclick=openModal;
     document.getElementById('cancelBtn').onclick=closeModal;
     document.getElementById('modal').onclick=e=>{ if(e.target.id==='modal') closeModal(); };
-    document.getElementById('inputRepeat').onchange=function(){ document.getElementById('repeatSection').style.display=this.checked?'block':'none'; };
+    document.getElementById('inputRepeatType').onchange=function(){ applyRepeatTypeUI(this.value); };
 
     document.getElementById('saveBtn').onclick=async function(){
       const person=document.getElementById('inputPerson').value;
@@ -619,15 +721,23 @@
       const date=document.getElementById('inputDate').value;
       const time=document.getElementById('inputTime').value;
       const endTime=document.getElementById('inputEndTime').value;
-      const isRepeat=document.getElementById('inputRepeat').checked;
+      const repeatType=document.getElementById('inputRepeatType').value;
       if(!title){ alert('일정 내용을 입력해주세요!'); return; }
       if(endTime && endTime<=time){ alert('종료 시간은 시작 시간보다 늦어야 해요!'); return; }
-      let repeatDays=[];
-      if(isRepeat){
-        repeatDays=Array.from(document.querySelectorAll('.repeat-days input:checked')).map(el=>parseInt(el.value));
-        if(!repeatDays.length){ alert('반복 요일을 선택해주세요!'); return; }
+
+      let repeatDays=[], repeatStart='', repeatEnd='', skipWeekends=false, skipHolidays=false;
+      if(repeatType!=='none'){
+        repeatStart=document.getElementById('inputRepeatStart').value || date;
+        repeatEnd=document.getElementById('inputRepeatEnd').value || '';
+        if(repeatEnd && repeatEnd<repeatStart){ alert('반복 종료일은 시작일보다 늦어야 해요!'); return; }
+        skipWeekends=document.getElementById('inputSkipWeekend').checked;
+        skipHolidays=document.getElementById('inputSkipHoliday').checked;
+        if(repeatType==='weekly'){
+          repeatDays=Array.from(document.querySelectorAll('.repeat-days input:checked')).map(el=>parseInt(el.value));
+          if(!repeatDays.length){ alert('반복 요일을 선택해주세요!'); return; }
+        }
       }
-      const data={ person, category, title, date, time, endTime, repeatDays };
+      const data={ person, category, title, date, time, endTime, repeatType, repeatDays, repeatStart, repeatEnd, skipWeekends, skipHolidays };
       try{
         if(editingId){ markMine(editingId); await window.FB.deleteDoc(window.FB.doc(window.FB.db,"events",editingId)); }
         const newDoc = await window.FB.addDoc(window.FB.eventsCol, data);
