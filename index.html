@@ -160,6 +160,37 @@
   #addBtn{ position:fixed; bottom:calc(22px + env(safe-area-inset-bottom)); right:20px; width:56px; height:56px; border-radius:50%; background:var(--accent); color:var(--accent-ink); border:none; font-size:28px; font-weight:700; box-shadow:0 6px 16px rgba(254,229,0,0.55); z-index:100; line-height:56px; }
   #addBtn:active{ transform:scale(0.93); }
 
+  #gameFab{ position:fixed; bottom:calc(22px + env(safe-area-inset-bottom)); left:20px; width:52px; height:52px; border-radius:50%; background:#3c1e1e; color:#fee500; border:none; font-size:22px; box-shadow:0 6px 16px rgba(0,0,0,0.3); z-index:100; }
+  #gameFab:active{ transform:scale(0.93); }
+
+  #gameModal{ display:none; position:fixed; inset:0; background:rgba(20,20,20,0.5); z-index:250; align-items:flex-end; justify-content:center; }
+  #gameModalBox{ background:var(--surface); width:100%; max-width:480px; padding:10px 18px calc(20px + env(safe-area-inset-bottom)); border-radius:22px 22px 0 0; max-height:92vh; overflow-y:auto; }
+  .game-tabs{ display:flex; flex-wrap:wrap; gap:8px; margin:6px 0 14px; }
+  .game-tab{ flex:1 1 calc(50% - 4px); padding:10px 4px; border:none; border-radius:10px; background:var(--bg); color:var(--muted); font-weight:800; font-size:13px; }
+  .game-tab.active{ background:#3c1e1e; color:#fee500; }
+  .game-pane{ display:flex; flex-direction:column; align-items:center; }
+  .game-toolbar{ display:flex; justify-content:space-between; align-items:center; width:100%; margin-bottom:10px; gap:8px; }
+  .game-toolbar select{ padding:7px 9px; border-radius:8px; border:1.5px solid var(--line); font-size:12.5px; font-weight:700; background:var(--bg); }
+  .game-toolbar span{ font-size:13px; font-weight:800; }
+  .game-help{ width:100%; font-size:11.5px; color:var(--muted); font-weight:600; line-height:1.4; margin:0 0 10px; }
+  #tetrisCanvas{ background:#1c1c1e; border-radius:10px; touch-action:none; }
+  .tetris-controls{ display:flex; gap:8px; margin-top:12px; }
+  .tetris-controls button{ width:46px; height:46px; border-radius:12px; border:none; background:var(--bg); font-size:18px; font-weight:800; }
+  .tetris-controls button:active{ background:#dfe6ee; }
+  .game-start-btn{ margin-top:14px; width:100%; padding:13px; border:none; border-radius:12px; background:var(--accent); color:var(--accent-ink); font-size:14.5px; font-weight:800; }
+  .game-close-btn{ margin-top:10px; width:100%; padding:12px; border:none; border-radius:12px; background:var(--bg); color:var(--text); font-size:14px; font-weight:700; }
+  .w2048-grid{ display:grid; gap:6px; width:100%; aspect-ratio:1/1; background:#dfe6ee; padding:6px; border-radius:12px; touch-action:none; }
+  .w2048-cell{ display:flex; align-items:center; justify-content:center; border-radius:8px; font-weight:800; background:#eef2f6; transition:0.1s; }
+
+  .diff-grid{ display:grid; gap:4px; width:100%; margin-bottom:8px; }
+  .diff-cell{ aspect-ratio:1/1; display:flex; align-items:center; justify-content:center; font-size:19px; background:var(--bg); border-radius:8px; border:2px solid transparent; transition:0.15s; }
+  .diff-cell.found{ border-color:#22c55e; background:#dcfce7; }
+
+  .rps-result{ text-align:center; font-size:14.5px; font-weight:800; padding:26px 10px; background:var(--bg); border-radius:12px; margin-bottom:12px; }
+  .rps-buttons{ display:flex; gap:10px; width:100%; }
+  .rps-buttons button{ flex:1; font-size:32px; padding:14px 0; border:none; border-radius:14px; background:var(--bg); }
+  .rps-buttons button:active{ background:#dfe6ee; }
+
   /* ---------- 모달 (바텀시트) ---------- */
   #modal{ display:none; position:fixed; inset:0; background:rgba(20,20,20,0.45); z-index:200; align-items:flex-end; justify-content:center; }
   #modalBox{ background:var(--surface); width:100%; max-width:480px; padding:10px 18px calc(22px + env(safe-area-inset-bottom)); border-radius:22px 22px 0 0; animation:slideUp 0.22s ease; max-height:90vh; overflow-y:auto; }
@@ -253,6 +284,7 @@
     <div class="agenda-list" id="agendaList"></div>
   </div>
 
+  <button id="gameFab">🎮</button>
   <button id="addBtn">+</button>
 
   <div id="modal">
@@ -318,6 +350,89 @@
         <button id="cancelBtn">취소</button>
         <button id="saveBtn">저장</button>
       </div>
+    </div>
+  </div>
+
+  <div id="gameModal">
+    <div id="gameModalBox">
+      <div class="sheet-handle"></div>
+      <div class="game-tabs">
+        <button class="game-tab active" data-g="tetris">🧱 테트리스</button>
+        <button class="game-tab" data-g="w2048">🔢 2048</button>
+        <button class="game-tab" data-g="diff">🔍 틀린그림</button>
+        <button class="game-tab" data-g="rps">✊ 가위바위보</button>
+      </div>
+
+      <div id="tetrisPane" class="game-pane">
+        <p class="game-help">◀▶로 이동, ↻로 회전, ▼로 천천히 내리기, ⤓로 바로 떨어뜨리기. 가로줄을 채우면 사라져요.</p>
+        <div class="game-toolbar">
+          <select id="tetrisDiff">
+            <option value="1">쉬움</option>
+            <option value="3">보통</option>
+            <option value="5">어려움</option>
+            <option value="8">매우어려움</option>
+          </select>
+          <span id="tetrisScore">점수 0 · 레벨 1</span>
+        </div>
+        <canvas id="tetrisCanvas" width="200" height="360"></canvas>
+        <div class="tetris-controls">
+          <button data-a="left">◀</button>
+          <button data-a="rotate">↻</button>
+          <button data-a="right">▶</button>
+          <button data-a="down">▼</button>
+          <button data-a="drop">⤓</button>
+        </div>
+        <button id="tetrisStart" class="game-start-btn">시작</button>
+      </div>
+
+      <div id="w2048Pane" class="game-pane" style="display:none">
+        <p class="game-help">화면을 좌우/위아래로 스와이프해 같은 숫자를 합치세요. 2048을 만들면 성공!</p>
+        <div class="game-toolbar">
+          <select id="w2048Diff">
+            <option value="5">쉬움 (5x5)</option>
+            <option value="4" selected>보통 (4x4)</option>
+            <option value="3">어려움 (3x3)</option>
+          </select>
+          <span id="w2048Score">점수 0 · 최고 0</span>
+        </div>
+        <div id="w2048Grid" class="w2048-grid"></div>
+        <button id="w2048Start" class="game-start-btn">새 게임</button>
+      </div>
+
+      <div id="diffPane" class="game-pane" style="display:none">
+        <p class="game-help">위쪽 그림과 다른 부분을 아래 그림에서 찾아 탭하세요. 다르면 초록 테두리, 아니면 잠깐 빨개져요.</p>
+        <div class="game-toolbar">
+          <select id="diffDiff">
+            <option value="easy">쉬움</option>
+            <option value="normal" selected>보통</option>
+            <option value="hard">어려움</option>
+          </select>
+          <span id="diffStatus">0/0 · 0초</span>
+        </div>
+        <div id="diffGridA" class="diff-grid"></div>
+        <div id="diffGridB" class="diff-grid"></div>
+        <button id="diffStart" class="game-start-btn">새 게임</button>
+      </div>
+
+      <div id="rpsPane" class="game-pane" style="display:none">
+        <p class="game-help">가위/바위/보 중 하나를 탭해 상대와 대결하세요. 이기면 연승이 올라가고, 지면 0으로 초기화돼요.</p>
+        <div class="game-toolbar">
+          <select id="rpsDiff">
+            <option value="easy">쉬움</option>
+            <option value="normal" selected>보통</option>
+            <option value="hard">어려움</option>
+          </select>
+          <span id="rpsStatus">연승 0 · 최고 0</span>
+        </div>
+        <div id="rpsResult" class="rps-result">가위, 바위, 보를 선택하세요</div>
+        <div class="rps-buttons">
+          <button data-r="✌️">✌️</button>
+          <button data-r="✊">✊</button>
+          <button data-r="✋">✋</button>
+        </div>
+      </div>
+
+      <button id="gameCloseBtn" class="game-close-btn">닫기</button>
     </div>
   </div>
 
@@ -803,6 +918,346 @@
       setupLock();
       // 잠금화면이 뜬 뒤에도 파이어베이스 연결이 오래 걸리면 로딩 오버레이는 먼저 내려줌
       setTimeout(hideInitLoading, 400);
+    });
+
+    /* ================= 미니게임: 테트리스 ================= */
+    const TET_SHAPES = {
+      I:[[0,0,0,0],[1,1,1,1],[0,0,0,0],[0,0,0,0]],
+      O:[[1,1],[1,1]],
+      T:[[0,1,0],[1,1,1],[0,0,0]],
+      S:[[0,1,1],[1,1,0],[0,0,0]],
+      Z:[[1,1,0],[0,1,1],[0,0,0]],
+      J:[[1,0,0],[1,1,1],[0,0,0]],
+      L:[[0,0,1],[1,1,1],[0,0,0]]
+    };
+    const TET_COLORS = { I:'#22d3ee', O:'#facc15', T:'#a78bfa', S:'#4ade80', Z:'#f87171', J:'#60a5fa', L:'#fb923c' };
+    const TET_COLS=10, TET_ROWS=18, TET_CELL=20;
+    let tet_ctx, tet_board, tet_piece, tet_score=0, tet_level=1, tet_linesForLevel=0, tet_dropInterval=800, tet_timerId=null, tet_running=false;
+
+    function tet_rotateMatrix(m){
+      const n=m.length; const res=Array.from({length:n},()=>Array(n).fill(0));
+      for(let r=0;r<n;r++) for(let c=0;c<n;c++) res[c][n-1-r]=m[r][c];
+      return res;
+    }
+    function tet_newBoard(){ return Array.from({length:TET_ROWS},()=>Array(TET_COLS).fill(null)); }
+    function tet_randomPiece(){
+      const keys=Object.keys(TET_SHAPES);
+      const k=keys[Math.floor(Math.random()*keys.length)];
+      const shape=TET_SHAPES[k].map(r=>r.slice());
+      return { shape, color:TET_COLORS[k], x:Math.floor((TET_COLS-shape.length)/2), y:0 };
+    }
+    function tet_collide(shape,px,py){
+      for(let r=0;r<shape.length;r++) for(let c=0;c<shape[r].length;c++){
+        if(!shape[r][c]) continue;
+        const nx=px+c, ny=py+r;
+        if(nx<0||nx>=TET_COLS||ny>=TET_ROWS) return true;
+        if(ny>=0 && tet_board[ny][nx]) return true;
+      }
+      return false;
+    }
+    function tet_merge(){
+      const {shape,color,x,y}=tet_piece;
+      for(let r=0;r<shape.length;r++) for(let c=0;c<shape[r].length;c++){
+        if(shape[r][c] && y+r>=0) tet_board[y+r][x+c]=color;
+      }
+    }
+    function tet_resetTimer(){
+      clearInterval(tet_timerId);
+      tet_timerId=setInterval(()=>{ if(tet_running) tet_softDrop(); }, tet_dropInterval);
+    }
+    function tet_clearLines(){
+      let cleared=0;
+      for(let r=TET_ROWS-1;r>=0;r--){
+        if(tet_board[r].every(cell=>cell)){
+          tet_board.splice(r,1);
+          tet_board.unshift(Array(TET_COLS).fill(null));
+          cleared++; r++;
+        }
+      }
+      if(cleared){
+        tet_score += [0,100,300,500,800][cleared]*tet_level;
+        tet_linesForLevel += cleared;
+        if(tet_linesForLevel>=10){
+          tet_linesForLevel-=10; tet_level++;
+          tet_dropInterval=Math.max(120, tet_dropInterval-80);
+          tet_resetTimer();
+        }
+      }
+    }
+    function tet_spawn(){
+      tet_piece=tet_randomPiece();
+      if(tet_collide(tet_piece.shape, tet_piece.x, tet_piece.y)) tet_gameOver();
+    }
+    function tet_gameOver(){
+      tet_running=false; clearInterval(tet_timerId);
+      document.getElementById('tetrisStart').textContent='다시 시작';
+      tet_draw();
+      setTimeout(()=>alert('게임 오버! 점수 '+tet_score), 50);
+    }
+    function tet_updateScoreLabel(){
+      document.getElementById('tetrisScore').textContent=`점수 ${tet_score} · 레벨 ${tet_level}`;
+    }
+    function tet_move(dx){
+      const nx=tet_piece.x+dx;
+      if(!tet_collide(tet_piece.shape,nx,tet_piece.y)) tet_piece.x=nx;
+      tet_draw();
+    }
+    function tet_rotate(){
+      const rotated=tet_rotateMatrix(tet_piece.shape);
+      if(!tet_collide(rotated,tet_piece.x,tet_piece.y)) tet_piece.shape=rotated;
+      else if(!tet_collide(rotated,tet_piece.x-1,tet_piece.y)){ tet_piece.shape=rotated; tet_piece.x-=1; }
+      else if(!tet_collide(rotated,tet_piece.x+1,tet_piece.y)){ tet_piece.shape=rotated; tet_piece.x+=1; }
+      tet_draw();
+    }
+    function tet_softDrop(){
+      if(!tet_collide(tet_piece.shape,tet_piece.x,tet_piece.y+1)){ tet_piece.y+=1; }
+      else{ tet_merge(); tet_clearLines(); if(tet_running) tet_spawn(); }
+      tet_draw(); tet_updateScoreLabel();
+    }
+    function tet_hardDrop(){
+      while(!tet_collide(tet_piece.shape,tet_piece.x,tet_piece.y+1)) tet_piece.y+=1;
+      tet_merge(); tet_clearLines(); if(tet_running) tet_spawn();
+      tet_draw(); tet_updateScoreLabel();
+    }
+    function tet_draw(){
+      if(!tet_ctx) return;
+      tet_ctx.fillStyle='#1c1c1e'; tet_ctx.fillRect(0,0,200,360);
+      for(let r=0;r<TET_ROWS;r++) for(let c=0;c<TET_COLS;c++){
+        if(tet_board[r][c]){ tet_ctx.fillStyle=tet_board[r][c]; tet_ctx.fillRect(c*TET_CELL,r*TET_CELL,TET_CELL-1,TET_CELL-1); }
+      }
+      if(tet_piece){
+        const {shape,color,x,y}=tet_piece;
+        tet_ctx.fillStyle=color;
+        for(let r=0;r<shape.length;r++) for(let c=0;c<shape[r].length;c++){
+          if(shape[r][c] && y+r>=0) tet_ctx.fillRect((x+c)*TET_CELL,(y+r)*TET_CELL,TET_CELL-1,TET_CELL-1);
+        }
+      }
+    }
+    function tet_start(){
+      tet_board=tet_newBoard();
+      tet_level=parseInt(document.getElementById('tetrisDiff').value)||1;
+      tet_score=0; tet_linesForLevel=0;
+      tet_dropInterval=Math.max(150, 800-(tet_level-1)*70);
+      tet_spawn();
+      tet_running=true;
+      document.getElementById('tetrisStart').textContent='다시 시작';
+      tet_updateScoreLabel();
+      tet_resetTimer();
+      tet_draw();
+    }
+    document.getElementById('tetrisStart').onclick=tet_start;
+    document.querySelectorAll('.tetris-controls button').forEach(btn=>{
+      btn.onclick=()=>{
+        if(!tet_running) return;
+        const a=btn.dataset.a;
+        if(a==='left') tet_move(-1);
+        else if(a==='right') tet_move(1);
+        else if(a==='rotate') tet_rotate();
+        else if(a==='down') tet_softDrop();
+        else if(a==='drop') tet_hardDrop();
+      };
+    });
+
+    /* ================= 미니게임: 2048 ================= */
+    let g2048_size=4, g2048_grid=null, g2048_score=0;
+    let g2048_best=parseInt(localStorage.getItem('g2048best')||'0',10);
+    function g2048_emptyGrid(n){ return Array.from({length:n},()=>Array(n).fill(0)); }
+    function g2048_addRandom(){
+      const empties=[];
+      for(let r=0;r<g2048_size;r++) for(let c=0;c<g2048_size;c++) if(!g2048_grid[r][c]) empties.push([r,c]);
+      if(!empties.length) return;
+      const [r,c]=empties[Math.floor(Math.random()*empties.length)];
+      g2048_grid[r][c]=Math.random()<0.9?2:4;
+    }
+    function g2048_start(){
+      g2048_size=parseInt(document.getElementById('w2048Diff').value)||4;
+      g2048_grid=g2048_emptyGrid(g2048_size);
+      g2048_score=0;
+      g2048_addRandom(); g2048_addRandom();
+      g2048_render();
+    }
+    const G2048_PALETTE={2:'#eef2f6',4:'#e3e8ee',8:'#fde68a',16:'#fbbf24',32:'#fb923c',64:'#f87171',128:'#facc15',256:'#fee500',512:'#a78bfa',1024:'#60a5fa',2048:'#4ade80'};
+    function g2048_render(){
+      const el=document.getElementById('w2048Grid');
+      el.style.gridTemplateColumns=`repeat(${g2048_size},1fr)`;
+      el.innerHTML='';
+      for(let r=0;r<g2048_size;r++) for(let c=0;c<g2048_size;c++){
+        const v=g2048_grid[r][c];
+        const cell=document.createElement('div');
+        cell.className='w2048-cell';
+        cell.style.background=v?(G2048_PALETTE[v]||'#3c1e1e'):'#eef2f6';
+        cell.style.color=v?'#3c1e1e':'#7c8797';
+        cell.style.fontSize=g2048_size>=5?'13px':'18px';
+        cell.textContent=v||'';
+        el.appendChild(cell);
+      }
+      document.getElementById('w2048Score').textContent=`점수 ${g2048_score} · 최고 ${g2048_best}`;
+    }
+    function g2048_slideLine(line){
+      const n=line.length;
+      const arr=line.filter(v=>v);
+      let gained=0;
+      for(let i=0;i<arr.length-1;i++){
+        if(arr[i]===arr[i+1]){ arr[i]*=2; gained+=arr[i]; arr.splice(i+1,1); }
+      }
+      while(arr.length<n) arr.push(0);
+      const moved=arr.some((v,i)=>v!==line[i]);
+      return { line:arr, gained, moved };
+    }
+    function g2048_move(dir){
+      const n=g2048_size; let moved=false, totalGain=0;
+      const getLine=(i)=>{ const l=[]; for(let j=0;j<n;j++) l.push(dir==='left'||dir==='right'?g2048_grid[i][j]:g2048_grid[j][i]); return l; };
+      const setLine=(i,line)=>{ for(let j=0;j<n;j++){ if(dir==='left'||dir==='right') g2048_grid[i][j]=line[j]; else g2048_grid[j][i]=line[j]; } };
+      for(let i=0;i<n;i++){
+        let line=getLine(i);
+        if(dir==='right'||dir==='down') line=line.reverse();
+        const res=g2048_slideLine(line);
+        let finalLine=res.line;
+        if(dir==='right'||dir==='down') finalLine=finalLine.reverse();
+        if(res.moved) moved=true;
+        totalGain+=res.gained;
+        setLine(i,finalLine);
+      }
+      if(moved){
+        g2048_score+=totalGain;
+        if(g2048_score>g2048_best){ g2048_best=g2048_score; localStorage.setItem('g2048best', g2048_best); }
+        g2048_addRandom();
+        g2048_render();
+        if(g2048_isGameOver()) setTimeout(()=>alert('게임 오버! 점수 '+g2048_score), 50);
+      }
+    }
+    function g2048_isGameOver(){
+      for(let r=0;r<g2048_size;r++) for(let c=0;c<g2048_size;c++){
+        if(!g2048_grid[r][c]) return false;
+        if(c<g2048_size-1 && g2048_grid[r][c]===g2048_grid[r][c+1]) return false;
+        if(r<g2048_size-1 && g2048_grid[r][c]===g2048_grid[r+1][c]) return false;
+      }
+      return true;
+    }
+    document.getElementById('w2048Start').onclick=g2048_start;
+    (function(){
+      let sx=0, sy=0;
+      const grid=document.getElementById('w2048Grid');
+      grid.addEventListener('touchstart', e=>{ const t=e.touches[0]; sx=t.clientX; sy=t.clientY; }, {passive:true});
+      grid.addEventListener('touchend', e=>{
+        const t=e.changedTouches[0];
+        const dx=t.clientX-sx, dy=t.clientY-sy;
+        if(Math.abs(dx)<20 && Math.abs(dy)<20) return;
+        if(Math.abs(dx)>Math.abs(dy)) g2048_move(dx>0?'right':'left');
+        else g2048_move(dy>0?'down':'up');
+      }, {passive:true});
+    })();
+    document.addEventListener('keydown', e=>{
+      if(document.getElementById('gameModal').style.display!=='flex') return;
+      if(document.getElementById('w2048Pane').style.display==='none') return;
+      const map={ArrowLeft:'left',ArrowRight:'right',ArrowUp:'up',ArrowDown:'down'};
+      if(map[e.key]){ e.preventDefault(); g2048_move(map[e.key]); }
+    });
+
+    /* ================= 미니게임: 틀린그림찾기 ================= */
+    const DIFF_EMOJIS=['🍎','🍌','🍇','🍉','🍊','🍋','🍓','🍒','🥝','🍑','🥕','🌽','🍄','🌸','⭐','🎈','🎵','⚽','🎲','💎'];
+    const DIFF_LEVELS={ easy:{cols:4,rows:3,diffs:3}, normal:{cols:5,rows:4,diffs:5}, hard:{cols:6,rows:5,diffs:8} };
+    let diff_itemsA=[], diff_itemsB=[], diff_diffSet=new Set(), diff_found=new Set(), diff_timer=null, diff_startTime=0, diff_running=false;
+    function diff_start(){
+      const lvl=DIFF_LEVELS[document.getElementById('diffDiff').value];
+      const total=lvl.cols*lvl.rows;
+      diff_itemsA=Array.from({length:total},()=>DIFF_EMOJIS[Math.floor(Math.random()*DIFF_EMOJIS.length)]);
+      diff_itemsB=diff_itemsA.slice();
+      const idxs=[...Array(total).keys()].sort(()=>Math.random()-0.5).slice(0,lvl.diffs);
+      diff_diffSet=new Set(idxs);
+      idxs.forEach(i=>{
+        let ne;
+        do{ ne=DIFF_EMOJIS[Math.floor(Math.random()*DIFF_EMOJIS.length)]; } while(ne===diff_itemsA[i]);
+        diff_itemsB[i]=ne;
+      });
+      diff_found=new Set();
+      diff_running=true; diff_startTime=Date.now();
+      clearInterval(diff_timer);
+      diff_timer=setInterval(diff_updateStatus, 500);
+      diff_renderGrids(lvl.cols);
+      diff_updateStatus();
+    }
+    function diff_renderGrids(cols){
+      const a=document.getElementById('diffGridA'), b=document.getElementById('diffGridB');
+      a.style.gridTemplateColumns=`repeat(${cols},1fr)`; b.style.gridTemplateColumns=`repeat(${cols},1fr)`;
+      a.innerHTML=''; b.innerHTML='';
+      diff_itemsA.forEach(em=>{ const c=document.createElement('div'); c.className='diff-cell'; c.textContent=em; a.appendChild(c); });
+      diff_itemsB.forEach((em,i)=>{
+        const c=document.createElement('div'); c.className='diff-cell'; c.textContent=em;
+        c.onclick=()=>diff_tap(i,c);
+        b.appendChild(c);
+      });
+    }
+    function diff_tap(i,el){
+      if(!diff_running || diff_found.has(i)) return;
+      if(diff_diffSet.has(i)){
+        diff_found.add(i); el.classList.add('found');
+        document.querySelectorAll('#diffGridA .diff-cell')[i].classList.add('found');
+        if(diff_found.size===diff_diffSet.size){
+          diff_running=false; clearInterval(diff_timer);
+          const sec=Math.floor((Date.now()-diff_startTime)/1000);
+          setTimeout(()=>alert(`성공! ${sec}초 걸렸어요`), 50);
+        }
+      } else {
+        el.style.background='#fdeaea';
+        setTimeout(()=>{ if(!diff_found.has(i)) el.style.background=''; }, 250);
+      }
+      diff_updateStatus();
+    }
+    function diff_updateStatus(){
+      const sec=Math.floor((Date.now()-diff_startTime)/1000);
+      document.getElementById('diffStatus').textContent=`${diff_found.size}/${diff_diffSet.size} · ${sec}초`;
+    }
+    document.getElementById('diffStart').onclick=diff_start;
+
+    /* ================= 미니게임: 가위바위보 연승전 ================= */
+    let rps_streak=0, rps_best=parseInt(localStorage.getItem('rps_best')||'0',10), rps_history=[];
+    const RPS_BEAT={'✌️':'✊','✊':'✋','✋':'✌️'};
+    function rps_updateStatus(){ document.getElementById('rpsStatus').textContent=`연승 ${rps_streak} · 최고 ${rps_best}`; }
+    function rps_computerPick(diff){
+      const moves=['✌️','✊','✋'];
+      if(diff==='easy' || rps_history.length<3) return moves[Math.floor(Math.random()*3)];
+      const recent=rps_history.slice(-5);
+      const counts={}; recent.forEach(m=>counts[m]=(counts[m]||0)+1);
+      const mostFreq=Object.keys(counts).sort((a,b)=>counts[b]-counts[a])[0];
+      const counterChance = diff==='hard' ? 0.8 : 0.5;
+      return Math.random()<counterChance ? RPS_BEAT[mostFreq] : moves[Math.floor(Math.random()*3)];
+    }
+    function rps_play(player){
+      const diff=document.getElementById('rpsDiff').value;
+      const comp=rps_computerPick(diff);
+      rps_history.push(player);
+      let result;
+      if(player===comp) result='무승부';
+      else if(RPS_BEAT[player]===comp){ result='승리! 🎉'; rps_streak++; }
+      else { result='패배 ㅠㅠ'; rps_streak=0; }
+      if(rps_streak>rps_best){ rps_best=rps_streak; localStorage.setItem('rps_best', rps_best); }
+      document.getElementById('rpsResult').textContent=`나 ${player}  vs  상대 ${comp}  →  ${result}`;
+      rps_updateStatus();
+    }
+    document.querySelectorAll('.rps-buttons button').forEach(btn=>{
+      btn.onclick=()=>rps_play(btn.dataset.r);
+    });
+
+    /* ================= 게임 모달 공통 ================= */
+    document.getElementById('gameFab').onclick=()=>{
+      document.getElementById('gameModal').style.display='flex';
+      if(!tet_board){ tet_ctx=document.getElementById('tetrisCanvas').getContext('2d'); tet_board=tet_newBoard(); tet_draw(); }
+    };
+    document.getElementById('gameCloseBtn').onclick=()=>{
+      document.getElementById('gameModal').style.display='none';
+      tet_running=false; clearInterval(tet_timerId);
+    };
+    document.querySelectorAll('.game-tab').forEach(tab=>{
+      tab.onclick=()=>{
+        document.querySelectorAll('.game-tab').forEach(t=>t.classList.remove('active'));
+        tab.classList.add('active');
+        const g=tab.dataset.g;
+        const panes={ tetris:'tetrisPane', w2048:'w2048Pane', diff:'diffPane', rps:'rpsPane' };
+        Object.keys(panes).forEach(key=>{
+          document.getElementById(panes[key]).style.display = (key===g) ? 'flex' : 'none';
+        });
+      };
     });
 
     // 홈 화면 아이콘으로 열었을 때 재접속 속도를 위한 서비스워커 등록 (실패해도 앱 동작에는 영향 없음)
