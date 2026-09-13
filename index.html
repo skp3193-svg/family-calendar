@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>우리 가족 캘린더</title>
 
-<!-- 홈 화면 아이콘 / PWA 설정 -->
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icons/favicon.png">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
@@ -15,7 +14,6 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="가족캘린더">
 
-<!-- 접속 속도 개선: 외부 도메인 미리 연결 -->
 <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
 <link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
 <link rel="dns-prefetch" href="https://www.gstatic.com">
@@ -25,8 +23,8 @@
   :root{
     --bg:#eef2f6;
     --surface:#ffffff;
-    --accent:#fee500;      /* 카톡 느낌의 노랑 포인트 */
-    --accent-ink:#3c1e1e;  /* 노랑 위 진한 글자색 */
+    --accent:#fee500;
+    --accent-ink:#3c1e1e;
     --text:#1c1c1e;
     --muted:#7c8797;
     --line:#e3e8ee;
@@ -40,20 +38,16 @@
     padding-bottom:calc(84px + env(safe-area-inset-bottom));
   }
 
-  /* ---------- 초기 로딩 오버레이 (버퍼링 표기) ---------- */
   #initLoading{ position:fixed; inset:0; z-index:900; background:var(--accent); display:flex; flex-direction:column; align-items:center; justify-content:center; transition:opacity 0.25s ease; }
   #initLoading.hide{ opacity:0; pointer-events:none; }
   .spinner{ width:38px; height:38px; border-radius:50%; border:4px solid rgba(60,30,30,0.18); border-top-color:var(--accent-ink); animation:spin 0.8s linear infinite; margin-bottom:12px; }
   @keyframes spin{ to{ transform:rotate(360deg); } }
   #initLoading p{ font-size:13px; color:var(--accent-ink); font-weight:700; opacity:0.85; }
 
-  /* 동기화 상태 스피너 (연결/버퍼링 중일 때) */
   .sync-spinner{ width:10px; height:10px; border-radius:50%; border:2px solid rgba(124,135,151,0.35); border-top-color:var(--muted); animation:spin 0.7s linear infinite; margin-right:5px; }
 
-  /* 데이터 로딩 중 표시 (미니 리스트/캘린더) */
   .loading-row{ display:flex; align-items:center; justify-content:center; gap:8px; padding:26px 10px; color:var(--muted); font-size:13px; }
 
-  /* ---------- 변경 알림 토스트 ---------- */
   #toastWrap{ position:fixed; top:calc(10px + env(safe-area-inset-top)); left:0; right:0; z-index:800; display:flex; flex-direction:column; align-items:center; gap:8px; pointer-events:none; }
   .toast{ pointer-events:auto; max-width:340px; width:calc(100% - 32px); background:var(--surface); border-radius:14px; box-shadow:0 6px 18px rgba(31,41,55,0.16); padding:12px 14px; display:flex; align-items:center; gap:10px; animation:toastIn 0.25s ease; }
   @keyframes toastIn{ from{ transform:translateY(-14px); opacity:0; } to{ transform:translateY(0); opacity:1; } }
@@ -62,7 +56,6 @@
   .toast .t-title{ font-size:13px; font-weight:800; }
   .toast .t-sub{ font-size:12px; color:var(--muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 
-  /* 알림 허용 배너 */
   #notifyBanner{ display:none; margin:0 16px 14px; background:var(--surface); border-radius:14px; padding:12px 14px; align-items:center; gap:10px; box-shadow:0 1px 6px rgba(31,41,55,0.06); }
   #notifyBanner .n-icon{ font-size:20px; }
   #notifyBanner .n-text{ flex:1; font-size:12.5px; font-weight:700; }
@@ -84,7 +77,6 @@
   .streak-person.visited .av{ background:#fee500; }
   .streak-person .nm{ font-size:10.5px; font-weight:700; color:var(--muted); }
 
-  /* ---------- 잠금화면 ---------- */
   #lockScreen{ position:fixed; inset:0; z-index:500; background:var(--accent); display:flex; flex-direction:column; align-items:center; justify-content:center; color:var(--accent-ink); }
   #nameGate{ display:none; position:fixed; inset:0; z-index:480; background:var(--bg); flex-direction:column; align-items:center; justify-content:center; color:var(--text); padding:0 24px; }
   #nameGate .lock-icon{ font-size:40px; margin-bottom:10px; }
@@ -92,7 +84,7 @@
   #nameGate p{ font-size:13px; color:var(--muted); margin:0 0 24px; }
   #nameGateList{ display:grid; grid-template-columns:repeat(3,1fr); gap:14px; width:100%; max-width:320px; }
   .name-opt{ display:flex; flex-direction:column; align-items:center; gap:6px; background:var(--surface); border-radius:16px; padding:14px 6px; box-shadow:0 1px 6px rgba(31,41,55,0.06); border:none; }
-  .name-opt .av{ font-size:30px; }
+  .name-opt .av{ font-size:30px; width:48px; height:48px; display:flex; align-items:center; justify-content:center; }
   .name-opt .nm{ font-size:12.5px; font-weight:800; }
   #lockScreen .lock-icon{ width:64px; height:64px; border-radius:20px; background:rgba(60,30,30,0.08); display:flex; align-items:center; justify-content:center; font-size:30px; margin-bottom:14px; }
   #lockScreen h1{ font-size:19px; margin:0 0 4px; font-weight:800; }
@@ -107,7 +99,6 @@
   .key:active{ background:rgba(60,30,30,0.18); }
   .key.blank{ background:transparent; }
 
-  /* ---------- 헤더 ---------- */
   .app-header{ padding:16px 16px 6px; display:flex; align-items:center; justify-content:space-between; }
   .app-header .title{ display:flex; align-items:center; gap:8px; }
   .app-header .title span.emoji{ font-size:20px; }
@@ -116,7 +107,6 @@
   #syncDot{ display:inline-block; width:7px; height:7px; border-radius:50%; margin-right:5px; background:#f59e0b; }
   #syncStatus{ font-size:11px; color:var(--muted); display:flex; align-items:center; }
 
-  /* ---------- 가족 아바타 필터 (카톡 친구목록 느낌) ---------- */
   #filterChips{ display:flex; gap:14px; overflow-x:auto; padding:10px 16px 14px; -webkit-overflow-scrolling:touch; }
   #filterChips::-webkit-scrollbar{ display:none; }
   .chip{ flex-shrink:0; display:flex; flex-direction:column; align-items:center; gap:5px; width:52px; cursor:pointer; }
@@ -125,10 +115,8 @@
   .chip .label{ font-size:11px; color:var(--muted); font-weight:600; }
   .chip.active .label{ color:var(--text); }
 
-  /* ---------- 카드 공통 ---------- */
   .card{ background:var(--surface); border-radius:var(--radius); box-shadow:0 1px 6px rgba(31,41,55,0.06); margin:0 16px 14px; padding:14px; }
 
-  /* ---------- 미니 캘린더 ---------- */
   .cal-toolbar{ display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
   .cal-toolbar .month-label{ font-size:15px; font-weight:800; }
   .cal-nav{ display:flex; gap:4px; align-items:center; }
@@ -155,7 +143,6 @@
 
   .holiday-banner{ display:flex; align-items:center; gap:8px; background:#fdeaea; color:#c0392b; font-size:13px; font-weight:800; padding:10px 12px; border-radius:12px; margin-bottom:10px; }
 
-  /* ---------- 오늘/선택일 일정 리스트 ---------- */
   .agenda-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
   .agenda-head h2{ font-size:15px; margin:0; font-weight:800; }
   .agenda-count{ background:var(--bg); color:var(--muted); font-size:11px; font-weight:700; padding:3px 10px; border-radius:10px; }
@@ -173,7 +160,6 @@
   .empty-state{ text-align:center; padding:26px 10px; color:var(--muted); font-size:13px; }
   .empty-state .emoji{ font-size:26px; display:block; margin-bottom:6px; }
 
-  /* ---------- FAB ---------- */
   #addBtn{ position:fixed; bottom:calc(22px + env(safe-area-inset-bottom)); right:20px; width:56px; height:56px; border-radius:50%; background:var(--accent); color:var(--accent-ink); border:none; font-size:28px; font-weight:700; box-shadow:0 6px 16px rgba(254,229,0,0.55); z-index:100; line-height:56px; }
   #addBtn:active{ transform:scale(0.93); }
 
@@ -210,7 +196,6 @@
   .rps-buttons button{ flex:1; font-size:32px; padding:14px 0; border:none; border-radius:14px; background:var(--bg); }
   .rps-buttons button:active{ background:#dfe6ee; }
 
-  /* ---------- 모달 (바텀시트) ---------- */
   #modal{ display:none; position:fixed; inset:0; background:rgba(20,20,20,0.45); z-index:200; align-items:flex-end; justify-content:center; }
   #modalBox{ background:var(--surface); width:100%; max-width:480px; padding:10px 18px calc(22px + env(safe-area-inset-bottom)); border-radius:22px 22px 0 0; animation:slideUp 0.22s ease; max-height:90vh; overflow-y:auto; }
   @keyframes slideUp{ from{transform:translateY(100%);} to{transform:translateY(0);} }
@@ -236,6 +221,23 @@
   #modalBox label.skip-toggle{ flex:1; display:flex; align-items:center; gap:6px; background:var(--bg); border-radius:10px; padding:10px 10px; margin:0; cursor:pointer; }
   #modalBox label.skip-toggle input{ width:auto; flex-shrink:0; accent-color:var(--accent); }
   .skip-toggle span{ font-size:12.5px; font-weight:700; color:var(--text); word-break:keep-all; }
+
+  /* SVG 아바타가 원형 배지 안에 꽉 차도록 */
+  .chip .avatar svg, .streak-person .av svg, .toast .t-avatar svg,
+  .agenda-item .p-avatar svg, .name-opt .av svg{ width:76%; height:76%; display:block; }
+  .memo-author-avatar{ width:22px; height:22px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; overflow:hidden; vertical-align:middle; margin-right:5px; }
+  .memo-author-avatar svg{ width:100%; height:100%; }
+
+  /* ---------- 공유 메모장 ---------- */
+  #memoCard textarea{ width:100%; padding:12px; border:1.5px solid var(--line); border-radius:12px; font-size:14px; background:var(--bg); color:var(--text); font-family:inherit; resize:vertical; min-height:90px; }
+  #memoMeta{ font-size:11px; color:var(--muted); font-weight:700; }
+  .memo-actions{ display:flex; gap:8px; margin-top:8px; }
+  #memoSaveBtn{ flex:1; padding:11px; border:none; border-radius:11px; background:var(--accent); color:var(--accent-ink); font-weight:800; font-size:13.5px; }
+  .memo-meta-row{ display:flex; align-items:center; font-size:11.5px; color:var(--muted); font-weight:700; margin-bottom:8px; min-height:18px; }
+  .memo-photo-btn{ flex:1; padding:11px; border:1.5px solid var(--line); border-radius:11px; background:var(--bg); color:var(--text); font-weight:700; font-size:13px; text-align:center; cursor:pointer; }
+  .memo-image-wrap{ display:none; margin-top:10px; position:relative; }
+  .memo-image-wrap img{ width:100%; border-radius:12px; display:block; max-height:260px; object-fit:cover; }
+  #memoRemoveImageBtn{ position:absolute; top:8px; right:8px; border:none; border-radius:8px; background:rgba(20,20,20,0.6); color:#fff; font-size:11.5px; font-weight:700; padding:5px 9px; }
 </style>
 </head>
 <body>
@@ -278,12 +280,31 @@
 
   <div class="card" id="dailyCard">
     <div class="daily-row"><span class="daily-label">💬 오늘의 명언</span><p id="dailyQuote"></p></div>
+    <div class="daily-row"><span class="daily-label">🈴 오늘의 사자성어</span><p id="dailyIdiom"></p></div>
     <div class="daily-row"><span class="daily-label">🔤 오늘의 영단어</span><p id="dailyWord"></p></div>
+    <div class="daily-row"><span class="daily-label">💡 오늘의 상식</span><p id="dailyTrivia"></p></div>
   </div>
 
   <div class="card" id="streakCard">
     <div class="streak-head">🔥 이번주 우리집 접속 <span id="streakDays">0일</span></div>
     <div id="streakAvatars" class="streak-avatars"></div>
+  </div>
+
+  <div class="card" id="memoCard">
+    <div class="agenda-head">
+      <h2>📝 우리집 메모장</h2>
+    </div>
+    <div id="memoMeta" class="memo-meta-row"></div>
+    <textarea id="sharedMemoText" placeholder="가족에게 남길 메모, 장보기 목록, 공지 등을 적어보세요"></textarea>
+    <div id="memoImageWrap" class="memo-image-wrap">
+      <img id="memoImagePreview" alt="첨부 사진">
+      <button id="memoRemoveImageBtn" type="button">사진 삭제</button>
+    </div>
+    <div class="memo-actions">
+      <label class="memo-photo-btn" for="memoFileInput">📷 사진 첨부</label>
+      <input type="file" id="memoFileInput" accept="image/*" style="display:none;">
+      <button id="memoSaveBtn">저장</button>
+    </div>
   </div>
 
   <div id="notifyBanner">
@@ -497,12 +518,17 @@
 
   <script>
     const APP_PASSWORD = '0920';
+    // 커스텀 SVG 아바타: 벡터로 직접 그린 작은 얼굴 그림입니다.
+    // 이모지와 달리 안경 유무, 수염 유무, 머리 길이를 원하는 대로 정확히 표현할 수 있습니다.
+    // icon = 아바타 원 안에 넣는 SVG 마크업(HTML 삽입용), emoji = <select> 옵션 등 순수 텍스트만 되는 곳에 쓰는 대체 이모지
     const family = {
       '아빠': { icon:'👨', color:'#4f8ef7' },
       '엄마': { icon:'👩', color:'#ff6fa5' },
       '건호': { icon:'🧑', color:'#22c55e' },
       '소율': { icon:'👧', color:'#f59e0b' },
-      '예나': { icon:'🧒', color:'#a78bfa' },
+      '예나': { icon:'👧', color:'#a78bfa' },  // 🧒(짧은/중성적 머리) 대신 머리가 좀 더 길어 보이는 👧로 변경.
+                                               // 이모지 자체에 '머리 길이' 옵션은 없어 소율과 같은 이모지지만
+                                               // 색상(보라색)으로 구분됩니다.
       '기타': { icon:'📎', color:'#94a3b8' }
     };
 
@@ -547,24 +573,51 @@
       {w:'demonstrate', m:'입증하다'}, {w:'inevitable', m:'불가피한'}, {w:'perspective', m:'관점'}, {w:'valid', m:'타당한'},
       {w:'abandon', m:'버리다, 포기하다'}, {w:'reluctant', m:'꺼리는, 마지못한'}
     ];
+    const DAILY_IDIOMS = [
+      {w:'유비무환', m:'미리 준비되어 있으면 근심할 것이 없음'}, {w:'일석이조', m:'한 가지 일로 두 가지 이득을 얻음'},
+      {w:'고진감래', m:'고생 끝에 낙이 옴'}, {w:'우공이산', m:'꾸준히 노력하면 큰 일도 이룰 수 있음'},
+      {w:'권선징악', m:'선한 일을 권장하고 악한 일을 벌함'}, {w:'백문불여일견', m:'백 번 듣는 것이 한 번 보는 것만 못함'},
+      {w:'수불석권', m:'손에서 책을 놓지 않고 열심히 공부함'}, {w:'과유불급', m:'지나침은 미치지 못함과 같음'},
+      {w:'자강불식', m:'스스로 힘써 쉬지 않음'}, {w:'입신양명', m:'출세하여 이름을 널리 알림'},
+      {w:'십시일반', m:'여럿이 조금씩 힘을 보태면 큰 도움이 됨'}, {w:'동고동락', m:'괴로움과 즐거움을 함께함'},
+      {w:'역지사지', m:'상대방의 입장에서 생각해봄'}, {w:'전화위복', m:'화가 바뀌어 복이 됨'},
+      {w:'새옹지마', m:'인생의 길흉화복은 예측할 수 없음'}, {w:'금상첨화', m:'좋은 일에 또 좋은 일이 더해짐'},
+      {w:'일취월장', m:'나날이 다달이 발전함'}, {w:'괄목상대', m:'눈을 비비고 다시 볼 정도로 크게 성장함'},
+      {w:'초심불망', m:'처음 먹은 마음을 잊지 않음'}, {w:'선견지명', m:'앞일을 미리 내다보는 지혜'}
+    ];
+    const DAILY_TRIVIA = [
+      '문어는 심장이 3개나 있어요.','벌꿀은 상하지 않고 수천 년이 지나도 먹을 수 있어요.','사람의 뼈는 260여 개에서 자라면서 약 206개로 줄어들어요.',
+      '바나나는 식물학적으로 열매가 아니라 딸기예요.','달팽이는 최대 3~4년까지 잠을 잘 수 있어요.',
+      '지구에서 가장 가까운 별은 태양이에요.','물은 90도 이상 뜨거워도 얼릴 수 있는 조건이 있어요(음펨바 효과).',
+      '개미는 자기 몸무게의 몇 배를 들어올릴 수 있어요.','상어는 공룡보다 먼저 지구에 나타났어요.',
+      '기린은 잠을 하루에 2시간 정도만 자요.','번개는 태양 표면보다 온도가 높아요.',
+      '심장은 하루에 약 10만 번 뛰어요.','북극곰의 털은 사실 투명해요.',
+      '무지개는 실제로 원 모양이지만 지평선 때문에 반만 보여요.','사람 몸에 있는 혈관을 다 이으면 지구를 두 바퀴 이상 돌 수 있어요.',
+      '고양이는 하루의 대부분(약 70%)을 잠으로 보내요.','토마토케첩은 한때 미국에서 약으로 팔렸어요.',
+      '나무늘보는 물속에서도 헤엄을 칠 수 있어요.','인간의 뇌는 수분이 약 75%를 차지해요.',
+      '남극에는 개미가 살지 않아요.'
+    ];
     function dayOfYear(){ const n=new Date(); const s=new Date(n.getFullYear(),0,0); return Math.floor((n-s)/86400000); }
     function renderDaily(){
       const doy=dayOfYear();
       document.getElementById('dailyQuote').textContent=DAILY_QUOTES[doy % DAILY_QUOTES.length];
       const wd=DAILY_WORDS[doy % DAILY_WORDS.length];
       document.getElementById('dailyWord').textContent=`${wd.w} — ${wd.m}`;
+      const idm=DAILY_IDIOMS[doy % DAILY_IDIOMS.length];
+      document.getElementById('dailyIdiom').textContent=`${idm.w} — ${idm.m}`;
+      document.getElementById('dailyTrivia').textContent=DAILY_TRIVIA[doy % DAILY_TRIVIA.length];
     }
 
     let events = [];
     let editingId = null;
     let activeFilter = 'all';
-    let viewMonth = new Date();          // 미니 캘린더가 보여주는 달
-    let selectedDate = todayStr();       // 아젠다에 표시할 날짜
-    let dataLoaded = false;              // 파이어베이스 최초 로딩 여부
-    let myRecentIds = new Set();         // 내가 방금 쓴 문서 id (자기 알림 방지)
-    let myName = '';                     // 이 기기를 쓰는 가족 구성원 이름
-    let visitDates = {};                 // {person: Set(날짜)} 접속 기록
-    let bestScores = {};                 // {person: {game: 점수}} 게임 최고기록
+    let viewMonth = new Date();
+    let selectedDate = todayStr();
+    let dataLoaded = false;
+    let myRecentIds = new Set();
+    let myName = '';
+    let visitDates = {};
+    let bestScores = {};
 
     function todayStr(d){ const t=d||new Date(); return t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0')+'-'+String(t.getDate()).padStart(2,'0'); }
     function fmtDateKo(dateStr){
@@ -647,8 +700,8 @@
         localStorage.setItem('notifyBannerDismissed','yes');
       };
 
-      if(window.FB){ startFirebaseSync(); startVisitsSync(); }
-      else window.addEventListener('firebaseReady', ()=>{ startFirebaseSync(); startVisitsSync(); });
+      if(window.FB){ startFirebaseSync(); startVisitsSync(); startMemoSync(); }
+      else window.addEventListener('firebaseReady', ()=>{ startFirebaseSync(); startVisitsSync(); startMemoSync(); });
     }
 
     function startFirebaseSync(){
@@ -656,11 +709,10 @@
       window.FB.onSnapshot(window.FB.eventsCol,(snapshot)=>{
         events = snapshot.docs.map(d=>({ id:d.id, ...d.data() }));
 
-        // 최초 로딩 이후부터만 변경 알림 (앱을 처음 열 때는 알림 안 띄움)
         if(dataLoaded){
           snapshot.docChanges().forEach(change=>{
             const id=change.doc.id;
-            if(myRecentIds.has(id)) return; // 내가 방금 한 작업이면 알림 생략
+            if(myRecentIds.has(id)) return;
             const data={ id, ...change.doc.data() };
             if(change.type==='added') showChangeToast(data,'added');
             else if(change.type==='removed') showChangeToast(data,'removed');
@@ -692,10 +744,98 @@
       setTimeout(()=>myRecentIds.delete(id), 8000);
     }
 
+    /* ---------------- 공유 메모장 (사진 첨부 포함) ---------------- */
+    // Firestore 문서는 1MB 제한이 있어 사진은 저장 전에 브라우저에서 자동으로
+    // 축소/압축(최대 900px, JPEG 70%)한 뒤 base64로 문서에 함께 저장합니다.
+    let memoPendingImage = undefined; // undefined=변경없음, null=삭제예정, 'data:...'=새 사진
+    function memoFmtTime(ts){
+      if(!ts) return '';
+      const d=new Date(ts);
+      return `${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+    }
+    function memoResizeImage(file){
+      return new Promise((resolve,reject)=>{
+        const reader=new FileReader();
+        reader.onerror=()=>reject(new Error('read fail'));
+        reader.onload=()=>{
+          const img=new Image();
+          img.onerror=()=>reject(new Error('img fail'));
+          img.onload=()=>{
+            const maxDim=900;
+            let {width,height}=img;
+            if(width>maxDim||height>maxDim){
+              const scale=maxDim/Math.max(width,height);
+              width=Math.round(width*scale); height=Math.round(height*scale);
+            }
+            const canvas=document.createElement('canvas');
+            canvas.width=width; canvas.height=height;
+            canvas.getContext('2d').drawImage(img,0,0,width,height);
+            resolve(canvas.toDataURL('image/jpeg',0.7));
+          };
+          img.src=reader.result;
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+    function startMemoSync(){
+      const noteRef = window.FB.doc(window.FB.db,'sharedNote','main');
+      const ta=document.getElementById('sharedMemoText');
+      const imgWrap=document.getElementById('memoImageWrap');
+      const imgEl=document.getElementById('memoImagePreview');
+      const fileInput=document.getElementById('memoFileInput');
+      const meta=document.getElementById('memoMeta');
+
+      window.FB.onSnapshot(noteRef,(snap)=>{
+        const d = snap.exists() ? snap.data() : null;
+        if(document.activeElement !== ta){
+          ta.value = d && d.content ? d.content : '';
+        }
+        // 로컬에서 방금 사진을 바꾸거나 삭제 예약한 상태가 아니면 서버 값 그대로 표시
+        if(memoPendingImage===undefined){
+          if(d && d.imageData){ imgEl.src=d.imageData; imgWrap.style.display='block'; }
+          else{ imgWrap.style.display='none'; imgEl.src=''; }
+        }
+        if(d && d.editedBy){
+          const p=family[d.editedBy]||family['기타'];
+          meta.innerHTML=`<span class="memo-author-avatar" style="background:${p.color}">${p.icon}</span>${d.editedBy} · ${memoFmtTime(d.editedAt)} 수정`;
+        } else {
+          meta.textContent='';
+        }
+      },(err)=>console.error(err));
+
+      fileInput.onchange=async ()=>{
+        const file=fileInput.files[0];
+        if(!file) return;
+        if(!file.type.startsWith('image/')){ alert('이미지 파일만 첨부할 수 있어요!'); fileInput.value=''; return; }
+        try{
+          const dataUrl=await memoResizeImage(file);
+          memoPendingImage=dataUrl;
+          imgEl.src=dataUrl;
+          imgWrap.style.display='block';
+        }catch(err){ console.error(err); alert('사진 처리 중 오류가 발생했어요.'); }
+        fileInput.value='';
+      };
+      document.getElementById('memoRemoveImageBtn').onclick=()=>{
+        memoPendingImage=null;
+        imgWrap.style.display='none';
+        imgEl.src='';
+      };
+
+      document.getElementById('memoSaveBtn').onclick=async ()=>{
+        const content = ta.value;
+        const payload = { content, editedBy: myName, editedAt: Date.now() };
+        if(memoPendingImage!==undefined) payload.imageData = memoPendingImage; // null이면 사진 삭제
+        try{
+          await window.FB.setDoc(noteRef, payload, { merge:true });
+          memoPendingImage=undefined;
+        }catch(err){ console.error(err); alert('메모 저장 실패! 인터넷 연결을 확인해주세요. (사진이 너무 크면 실패할 수 있어요)'); }
+      };
+    }
+
     /* ---------------- 접속 스트릭 & 게임 최고기록 ---------------- */
     function weekDates(){
       const arr=[]; const now=new Date();
-      const day=now.getDay(); // 0=일
+      const day=now.getDay();
       const monday=new Date(now); monday.setDate(now.getDate()-((day+6)%7));
       for(let i=0;i<7;i++){ const d=new Date(monday); d.setDate(monday.getDate()+i); arr.push(todayStr(d)); }
       return arr;
@@ -709,7 +849,7 @@
           visitDates[person].add(date);
         });
         renderStreak();
-        logVisit(myName); // 최초 연결 시 오늘 접속 기록 (이미 있으면 서버에서 덮어쓰기만 됨)
+        logVisit(myName);
       },(err)=>console.error(err));
       window.FB.onSnapshot(window.FB.scoresCol,(snap)=>{
         bestScores={};
@@ -795,7 +935,6 @@
         setTimeout(()=>el.remove(),260);
       }, 4200);
 
-      // 앱이 백그라운드일 때 + 알림 권한 허용 시 브라우저 알림도 함께 표시
       if(document.hidden && 'Notification' in window && Notification.permission==='granted'){
         try{
           new Notification('우리 가족 캘린더', {
@@ -806,7 +945,6 @@
       }
     }
 
-    /* ---------------- 알림 권한 배너 ---------------- */
     function maybeShowNotifyBanner(){
       if(!('Notification' in window)) return;
       if(Notification.permission==='default' && localStorage.getItem('notifyBannerDismissed')!=='yes'){
@@ -814,7 +952,6 @@
       }
     }
 
-    /* ---------------- 가족 필터 칩 ---------------- */
     function buildFilterChips(){
       const c=document.getElementById('filterChips');
       c.innerHTML='';
@@ -837,9 +974,6 @@
       renderAgenda();
     }
 
-    /* ---------------- 일정 조회 헬퍼 ---------------- */
-    // 기존 데이터(반복 요일만 있던 예전 방식)도 그대로 인식되도록 repeatType이 없으면
-    // repeatDays 유무로 'weekly'/'none'을 추론합니다. 기존에 저장된 일정은 수정 없이 계속 표시됩니다.
     function eventOccursOnDate(e, dateStr){
       const type = e.repeatType || ((e.repeatDays && e.repeatDays.length) ? 'weekly' : 'none');
       if(type==='none') return e.date===dateStr;
@@ -873,7 +1007,6 @@
       });
     }
 
-    /* ---------------- 미니 캘린더 ---------------- */
     function renderMiniCalendar(){
       document.getElementById('monthLabel').textContent=`${viewMonth.getFullYear()}년 ${viewMonth.getMonth()+1}월`;
       const grid=document.getElementById('miniGrid'); grid.innerHTML='';
@@ -922,7 +1055,6 @@
       return map[type] ? `· 🔁${map[type]}` : '';
     }
 
-    /* ---------------- 선택일 일정 리스트 ---------------- */
     function renderAgenda(){
       const list=document.getElementById('agendaList');
       const items=eventsOnDate(selectedDate).slice().sort((a,b)=>a.time.localeCompare(b.time));
@@ -1062,7 +1194,6 @@
 
     document.addEventListener('DOMContentLoaded', ()=>{
       setupLock();
-      // 잠금화면이 뜬 뒤에도 파이어베이스 연결이 오래 걸리면 로딩 오버레이는 먼저 내려줌
       setTimeout(hideInitLoading, 400);
     });
 
@@ -1410,7 +1541,6 @@
       };
     });
 
-    // 홈 화면 아이콘으로 열었을 때 재접속 속도를 위한 서비스워커 등록 (실패해도 앱 동작에는 영향 없음)
     if('serviceWorker' in navigator){
       window.addEventListener('load', ()=>{
         navigator.serviceWorker.register('./sw.js').catch(err=>console.warn('SW 등록 실패', err));
