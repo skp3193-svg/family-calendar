@@ -238,6 +238,22 @@
   .memo-image-wrap{ display:none; margin-top:10px; position:relative; }
   .memo-image-wrap img{ width:100%; border-radius:12px; display:block; max-height:260px; object-fit:cover; }
   #memoRemoveImageBtn{ position:absolute; top:8px; right:8px; border:none; border-radius:8px; background:rgba(20,20,20,0.6); color:#fff; font-size:11.5px; font-weight:700; padding:5px 9px; }
+
+  /* ---------- 날씨 ---------- */
+  .weather-today{ display:flex; align-items:center; gap:14px; padding:6px 2px 14px; }
+  .weather-today .w-emoji{ font-size:38px; line-height:1; }
+  .weather-today .w-temp{ font-size:25px; font-weight:800; }
+  .weather-today .w-desc{ font-size:12px; color:var(--muted); font-weight:700; margin-top:2px; }
+  .weather-week{ display:flex; gap:8px; overflow-x:auto; padding-bottom:2px; -webkit-overflow-scrolling:touch; }
+  .weather-week::-webkit-scrollbar{ display:none; }
+  .w-day{ flex:0 0 auto; width:52px; display:flex; flex-direction:column; align-items:center; gap:4px; background:var(--bg); border-radius:12px; padding:8px 4px; }
+  .w-day .wd-label{ font-size:11px; font-weight:700; color:var(--muted); }
+  .w-day .wd-emoji{ font-size:17px; }
+  .w-day .wd-temp{ font-size:10.5px; font-weight:700; white-space:nowrap; }
+  .w-day .wd-temp .max{ color:#e74c3c; }
+  .w-day .wd-temp .min{ color:#3b82f6; }
+  .weather-error{ font-size:12.5px; color:var(--muted); text-align:center; padding:14px 6px; line-height:1.6; }
+  .weather-retry{ margin-top:6px; border:none; border-radius:10px; background:var(--bg); color:var(--text); font-weight:700; font-size:12px; padding:8px 12px; }
 </style>
 </head>
 <body>
@@ -283,6 +299,17 @@
     <div class="daily-row"><span class="daily-label">🈴 오늘의 사자성어</span><p id="dailyIdiom"></p></div>
     <div class="daily-row"><span class="daily-label">🔤 오늘의 영단어</span><p id="dailyWord"></p></div>
     <div class="daily-row"><span class="daily-label">💡 오늘의 상식</span><p id="dailyTrivia"></p></div>
+  </div>
+
+  <div class="card" id="weatherCard">
+    <div class="agenda-head">
+      <h2>⛅ 날씨</h2>
+      <span class="agenda-count" id="weatherLocLabel"></span>
+    </div>
+    <div id="weatherToday" class="weather-today">
+      <div class="loading-row"><span class="sync-spinner"></span>날씨 불러오는 중...</div>
+    </div>
+    <div id="weatherWeek" class="weather-week"></div>
   </div>
 
   <div class="card" id="streakCard">
@@ -564,14 +591,14 @@
       '준비된 자에게 기회가 온다.','자신을 믿는 것이 성공의 첫걸음이다.'
     ];
     const DAILY_WORDS = [
-      {w:'achieve', m:'성취하다'}, {w:'benefit', m:'이익, 이득'}, {w:'consider', m:'고려하다'}, {w:'define', m:'정의하다'},
-      {w:'evidence', m:'증거'}, {w:'factor', m:'요인'}, {w:'generate', m:'생성하다'}, {w:'identify', m:'확인하다'},
-      {w:'justify', m:'정당화하다'}, {w:'maintain', m:'유지하다'}, {w:'obtain', m:'얻다, 획득하다'}, {w:'previous', m:'이전의'},
-      {w:'require', m:'요구하다'}, {w:'significant', m:'중요한'}, {w:'various', m:'다양한'}, {w:'establish', m:'설립하다, 확립하다'},
-      {w:'occur', m:'발생하다'}, {w:'purpose', m:'목적'}, {w:'reveal', m:'드러내다'}, {w:'sufficient', m:'충분한'},
-      {w:'tendency', m:'경향'}, {w:'accomplish', m:'해내다, 완수하다'}, {w:'circumstance', m:'상황, 환경'}, {w:'contribute', m:'기여하다'},
-      {w:'demonstrate', m:'입증하다'}, {w:'inevitable', m:'불가피한'}, {w:'perspective', m:'관점'}, {w:'valid', m:'타당한'},
-      {w:'abandon', m:'버리다, 포기하다'}, {w:'reluctant', m:'꺼리는, 마지못한'}
+      {w:'achieve', r:'어치브', m:'성취하다'}, {w:'benefit', r:'베너핏', m:'이익, 이득'}, {w:'consider', r:'컨시더', m:'고려하다'}, {w:'define', r:'디파인', m:'정의하다'},
+      {w:'evidence', r:'에비던스', m:'증거'}, {w:'factor', r:'팩터', m:'요인'}, {w:'generate', r:'제너레이트', m:'생성하다'}, {w:'identify', r:'아이덴티파이', m:'확인하다'},
+      {w:'justify', r:'저스티파이', m:'정당화하다'}, {w:'maintain', r:'메인테인', m:'유지하다'}, {w:'obtain', r:'옵테인', m:'얻다, 획득하다'}, {w:'previous', r:'프리비어스', m:'이전의'},
+      {w:'require', r:'리콰이어', m:'요구하다'}, {w:'significant', r:'시그니피컨트', m:'중요한'}, {w:'various', r:'베어리어스', m:'다양한'}, {w:'establish', r:'이스태블리시', m:'설립하다, 확립하다'},
+      {w:'occur', r:'어커', m:'발생하다'}, {w:'purpose', r:'퍼포스', m:'목적'}, {w:'reveal', r:'리빌', m:'드러내다'}, {w:'sufficient', r:'서피션트', m:'충분한'},
+      {w:'tendency', r:'텐던시', m:'경향'}, {w:'accomplish', r:'어컴플리시', m:'해내다, 완수하다'}, {w:'circumstance', r:'서컴스턴스', m:'상황, 환경'}, {w:'contribute', r:'컨트리뷰트', m:'기여하다'},
+      {w:'demonstrate', r:'데먼스트레이트', m:'입증하다'}, {w:'inevitable', r:'인에비터블', m:'불가피한'}, {w:'perspective', r:'퍼스펙티브', m:'관점'}, {w:'valid', r:'밸리드', m:'타당한'},
+      {w:'abandon', r:'어밴던', m:'버리다, 포기하다'}, {w:'reluctant', r:'릴럭턴트', m:'꺼리는, 마지못한'}
     ];
     const DAILY_IDIOMS = [
       {w:'유비무환', m:'미리 준비되어 있으면 근심할 것이 없음'}, {w:'일석이조', m:'한 가지 일로 두 가지 이득을 얻음'},
@@ -602,10 +629,79 @@
       const doy=dayOfYear();
       document.getElementById('dailyQuote').textContent=DAILY_QUOTES[doy % DAILY_QUOTES.length];
       const wd=DAILY_WORDS[doy % DAILY_WORDS.length];
-      document.getElementById('dailyWord').textContent=`${wd.w} — ${wd.m}`;
+      document.getElementById('dailyWord').textContent=`${wd.w} [${wd.r}] — ${wd.m}`;
       const idm=DAILY_IDIOMS[doy % DAILY_IDIOMS.length];
       document.getElementById('dailyIdiom').textContent=`${idm.w} — ${idm.m}`;
       document.getElementById('dailyTrivia').textContent=DAILY_TRIVIA[doy % DAILY_TRIVIA.length];
+    }
+
+    /* ---------------- 날씨 (Open-Meteo, API 키 불필요) ---------------- */
+    const WMO_MAP = {
+      0:['☀️','맑음'],1:['🌤️','대체로 맑음'],2:['⛅','구름 조금'],3:['☁️','흐림'],
+      45:['🌫️','안개'],48:['🌫️','서리 안개'],
+      51:['🌦️','약한 이슬비'],53:['🌦️','이슬비'],55:['🌧️','강한 이슬비'],
+      56:['🌧️','약한 착빙성 이슬비'],57:['🌧️','착빙성 이슬비'],
+      61:['🌧️','약한 비'],63:['🌧️','비'],65:['🌧️','강한 비'],
+      66:['🌧️','약한 착빙성 비'],67:['🌧️','착빙성 비'],
+      71:['🌨️','약한 눈'],73:['🌨️','눈'],75:['❄️','강한 눈'],77:['🌨️','싸락눈'],
+      80:['🌦️','약한 소나기'],81:['🌧️','소나기'],82:['⛈️','강한 소나기'],
+      85:['🌨️','약한 소낙눈'],86:['❄️','소낙눈'],
+      95:['⛈️','뇌우'],96:['⛈️','우박 동반 뇌우'],99:['⛈️','강한 우박 동반 뇌우']
+    };
+    function wmoInfo(code){ return WMO_MAP[code] || ['🌡️','']; }
+    function renderWeatherError(msg){
+      document.getElementById('weatherToday').innerHTML = `<div class="weather-error">${msg}<br><button class="weather-retry" id="weatherRetryBtn">다시 시도</button></div>`;
+      document.getElementById('weatherWeek').innerHTML='';
+      const btn=document.getElementById('weatherRetryBtn');
+      if(btn) btn.onclick=fetchWeather;
+    }
+    async function fetchWeatherAt(lat, lon, label){
+      try{
+        const url=`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=Asia%2FSeoul&forecast_days=7`;
+        const res=await fetch(url);
+        if(!res.ok) throw new Error('weather fetch failed');
+        const data=await res.json();
+        const cur=data.current;
+        const [emoji,desc]=wmoInfo(cur.weather_code);
+        document.getElementById('weatherLocLabel').textContent=label||'';
+        document.getElementById('weatherToday').innerHTML=`
+          <span class="w-emoji">${emoji}</span>
+          <div>
+            <div class="w-temp">${Math.round(cur.temperature_2m)}°</div>
+            <div class="w-desc">${desc}</div>
+          </div>`;
+        const dayNames=['일','월','화','수','목','금','토'];
+        const weekEl=document.getElementById('weatherWeek');
+        weekEl.innerHTML='';
+        data.daily.time.forEach((dateStr,i)=>{
+          const [we]=wmoInfo(data.daily.weather_code[i]);
+          const d=new Date(dateStr+'T00:00:00');
+          const lbl = i===0 ? '오늘' : dayNames[d.getDay()];
+          const div=document.createElement('div');
+          div.className='w-day';
+          div.innerHTML=`<div class="wd-label">${lbl}</div><div class="wd-emoji">${we}</div><div class="wd-temp"><span class="max">${Math.round(data.daily.temperature_2m_max[i])}°</span>/<span class="min">${Math.round(data.daily.temperature_2m_min[i])}°</span></div>`;
+          weekEl.appendChild(div);
+        });
+      }catch(err){
+        console.error(err);
+        renderWeatherError('날씨 정보를 불러오지 못했어요. 인터넷 연결을 확인해주세요.');
+      }
+    }
+    function fetchWeather(){
+      document.getElementById('weatherToday').innerHTML=`<div class="loading-row"><span class="sync-spinner"></span>날씨 불러오는 중...</div>`;
+      document.getElementById('weatherWeek').innerHTML='';
+      if(!('geolocation' in navigator)){
+        fetchWeatherAt(37.5665,126.9780,'서울 (기본 위치)');
+        return;
+      }
+      navigator.geolocation.getCurrentPosition(
+        (pos)=>{ fetchWeatherAt(pos.coords.latitude, pos.coords.longitude, '현재 위치'); },
+        (err)=>{
+          console.warn('위치 권한 거부/실패', err);
+          fetchWeatherAt(37.5665,126.9780,'서울 (기본 위치 · 위치권한 허용시 정확도 향상)');
+        },
+        { timeout:8000 }
+      );
     }
 
     let events = [];
@@ -682,6 +778,7 @@
 
       buildFilterChips();
       renderDaily();
+      fetchWeather();
       document.getElementById('inputDate').value=selectedDate;
 
       document.getElementById('prevMonth').onclick=()=>{ viewMonth.setMonth(viewMonth.getMonth()-1); renderMiniCalendar(); };
@@ -777,6 +874,8 @@
         reader.readAsDataURL(file);
       });
     }
+    let memoLastSeenTs = 0; // 최초 로딩 시 알림 방지용
+    let memoInitialLoaded = false;
     function startMemoSync(){
       const noteRef = window.FB.doc(window.FB.db,'sharedNote','main');
       const ta=document.getElementById('sharedMemoText');
@@ -798,9 +897,15 @@
         if(d && d.editedBy){
           const p=family[d.editedBy]||family['기타'];
           meta.innerHTML=`<span class="memo-author-avatar" style="background:${p.color}">${p.icon}</span>${d.editedBy} · ${memoFmtTime(d.editedAt)} 수정`;
+
+          if(memoInitialLoaded && d.editedBy!==myName && d.editedAt>memoLastSeenTs){
+            showMemoChangeNotification(d);
+          }
+          memoLastSeenTs = d.editedAt || memoLastSeenTs;
         } else {
           meta.textContent='';
         }
+        memoInitialLoaded = true;
       },(err)=>console.error(err));
 
       fileInput.onchange=async ()=>{
@@ -913,6 +1018,36 @@
     }
 
     /* ---------------- 변경 알림 토스트 ---------------- */
+    function showMemoChangeNotification(data){
+      const p=family[data.editedBy]||family['기타'];
+      const wrap=document.getElementById('toastWrap');
+      const el=document.createElement('div'); el.className='toast';
+      const preview=(data.content||'').slice(0,30) || (data.imageData?'사진을 남겼어요':'');
+      el.innerHTML=`
+        <div class="t-avatar" style="background:${p.color}">${p.icon}</div>
+        <div class="t-body">
+          <div class="t-title">${data.editedBy}님이 메모장을 수정했어요</div>
+          <div class="t-sub">${preview}</div>
+        </div>`;
+      el.onclick=()=>el.remove();
+      wrap.appendChild(el);
+      setTimeout(()=>{
+        el.style.transition='0.25s'; el.style.opacity='0'; el.style.transform='translateY(-10px)';
+        setTimeout(()=>el.remove(),260);
+      }, 4200);
+
+      if(document.hidden && 'Notification' in window && Notification.permission==='granted' && 'serviceWorker' in navigator){
+        navigator.serviceWorker.ready.then(reg=>{
+          reg.showNotification('우리 가족 캘린더', {
+            body:`${data.editedBy}님이 메모장을 수정했어요${preview?' · '+preview:''}`,
+            icon:'icons/icon-192.png',
+            badge:'icons/icon-192.png',
+            tag:'family-cal-memo'
+          }).catch(()=>{});
+        }).catch(()=>{});
+      }
+    }
+
     function showChangeToast(data,type){
       const p=family[data.person]||family['기타'];
       const verb = type==='added' ? '추가' : '삭제';
@@ -935,13 +1070,17 @@
         setTimeout(()=>el.remove(),260);
       }, 4200);
 
-      if(document.hidden && 'Notification' in window && Notification.permission==='granted'){
-        try{
-          new Notification('우리 가족 캘린더', {
+      // new Notification()은 iOS에서 홈화면에 설치된 PWA일 때 동작하지 않아
+      // 서비스워커의 showNotification을 사용합니다 (안드로이드/아이폰 공통으로 더 안정적으로 동작).
+      if(document.hidden && 'Notification' in window && Notification.permission==='granted' && 'serviceWorker' in navigator){
+        navigator.serviceWorker.ready.then(reg=>{
+          reg.showNotification('우리 가족 캘린더', {
             body:`${data.person}님이 '${data.title||'일정'}'을(를) ${verb}했어요`,
-            icon:'icons/icon-192.png'
-          });
-        }catch(e){ /* 무시 */ }
+            icon:'icons/icon-192.png',
+            badge:'icons/icon-192.png',
+            tag:'family-cal-event'
+          }).catch(()=>{});
+        }).catch(()=>{});
       }
     }
 
